@@ -28,6 +28,9 @@ import android.widget.Toast;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,12 +41,17 @@ public class MainActivity extends AppCompatActivity {
 
     private Button qrCodeFoundButton,plusbtn,minusbtn,btnViewData;
     private String qrCode;
+    private String total;
+    private String nameOfProduct;
+    private String sumOfProduct;
     public double sum;
-    public String total;
     Toast priceToast,db_toast;
     private static DecimalFormat df = new DecimalFormat("0.00");
     String[] fullItem;
     DatabaseHelper mDatabaseHelper;
+    int quantity;
+    HashMap<String, String> products = new HashMap<String, String>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         plusbtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
+                quantity++;
                 sum = sum + Double.parseDouble(fullItem[1]);
                 sum= Double.parseDouble(df.format(sum));
                 total = String.valueOf(sum);
@@ -99,6 +108,19 @@ public class MainActivity extends AppCompatActivity {
                     totalamount.setText(total);
                     Log.i(MainActivity.class.getSimpleName(), "SUM== " + sum);
                 }
+
+                /*if(products.containsKey(fullItem[0])){
+                    sumOfProduct+=Float.parseFloat(products.get(fullItem[0]));
+                    products.put(fullItem[0],products.get(fullItem[0])+(sumOfProduct));
+                    Log.i(MainActivity.class.getSimpleName(), "YEAHHH== " + products);
+                }else{
+                    sumOfProduct = String.valueOf(Float.valueOf(fullItem[1]));
+                    products.put(fullItem[0],sumOfProduct);
+                    Log.i(MainActivity.class.getSimpleName(), "YEAH== " + products);
+                    Log.i(MainActivity.class.getSimpleName(), "PRODUCT== " + fullItem[1]);
+
+                }*/
+
                 //Save data into database
                 AddData(fullItem[0],fullItem[1]);
             }
@@ -106,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
         minusbtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
+                quantity--;
                 sum = sum - Double.parseDouble(fullItem[1]);
                 sum= Double.parseDouble(df.format(sum));
                 total = String.valueOf(sum);
@@ -117,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
                     totalamount.setText(total);
                     Log.i(MainActivity.class.getSimpleName(), "SUM== " + sum);
                 }
+                AddData(fullItem[0],fullItem[1]);
             }
         });
         btnViewData.setOnClickListener(new View.OnClickListener() {
@@ -143,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
             db_toast.show();
         }
     }
-
 
     //Camera
     private void requestCamera() {

@@ -7,8 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG="DatabaseHelper";
@@ -27,12 +25,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                productName +" TEXT, " +productPrice +" TEXT)";
+                productName +" TEXT, " +productPrice +" TEXT, " +productQuantity +" TEXT)";
         db.execSQL(createTable);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
+        // Drop older table if existed
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+
+        onCreate(db);
     }
 
     public boolean addData(String name,String price) {
@@ -40,12 +42,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put(productPrice, price);
         contentValues.put(productName, name);
+        long result =0;
 
-        Log.d(TAG, "addData: Adding " + productName + " to " + TABLE_NAME);
+        Cursor data = fetchProduct(name);
 
-        long result = db.insert(TABLE_NAME, null, contentValues);
+        if(data.getCount()==0){
+            contentValues.put(productQuantity, 1);
+            result = db.insert(TABLE_NAME, null, contentValues);
+            Log.d(TAG, "YESSSS ");
+        }else{
+            Log.d(TAG, "NOOOO ");
+            updateQuantity(name);
+            contentValues.put(productQuantity, getQuantity(name));
+            result = db.update(TABLE_NAME,contentValues,"Name = ?",new String[]{name});
 
-        //if date as inserted incorrectly it will return -1
+        }
+
         if (result == -1) {
             return false;
         } else {
@@ -65,13 +77,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns quantity data from database
+     * @return
+     */
+    public String getQuantity(String name){
+        String quantity="";
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_NAME +
+                " WHERE " + productName + " = '" + name + "'";
+        Cursor data = db.rawQuery(query, null);
+        Log.d(TAG, "quantity is: " + query);
+        while(data.moveToNext()) {
+            quantity=data.getString(3);
+        }
+        return quantity;
+    }
+
+    /**
      * Returns only the ID that matches the name passed in
      * @param name
      * @return
      */
+    public Cursor fetchProduct(String name){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "SELECT *" + " FROM " + TABLE_NAME +
+                " WHERE " + productName + " = '" + name + "'";
+        Cursor data = db.rawQuery(query, null);
+        return data;
+    }
+
     public Cursor getItemID(String name){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT " + productName + " FROM " + TABLE_NAME +
+        String query = "SELECT *" + " FROM " + TABLE_NAME +
                 " WHERE " + productPrice + " = '" + name + "'";
         Cursor data = db.rawQuery(query, null);
         return data;
@@ -91,6 +128,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(TAG, "updateName: query: " + query);
         Log.d(TAG, "updateName: Setting name to " + newName);
         db.execSQL(query);
+    }
+
+    public void updateQuantity(String name){
+        String num= getQuantity(name);
+        int updatedQuantity=Integer.parseInt(num)+1;
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "UPDATE " + TABLE_NAME + " SET " + productQuantity +
+                " = '" + updatedQuantity + "' WHERE " + productName + " = '" + name + "'";
+        db.execSQL(query);
+
     }
 
     /**
