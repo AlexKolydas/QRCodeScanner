@@ -42,19 +42,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put(productPrice, price);
         contentValues.put(productName, name);
-        long result =0;
+        long result = 0,updateDbValues;
 
         Cursor data = fetchProduct(name);
 
         if(data.getCount()==0){
             contentValues.put(productQuantity, 1);
             result = db.insert(TABLE_NAME, null, contentValues);
-            Log.d(TAG, "YESSSS ");
         }else{
-            Log.d(TAG, "NOOOO ");
-            updateQuantity(name);
-            contentValues.put(productQuantity, getQuantity(name));
-            result = db.update(TABLE_NAME,contentValues,"Name = ?",new String[]{name});
+            updateProductDetails(name,"quantity");
+            updateProductDetails(name,price);
+
+            contentValues.put(productQuantity, getProductDetails(name,"quantity"));
+            contentValues.put(productPrice, getProductDetails(name,"price"));
+
+            updateDbValues = db.update(TABLE_NAME,contentValues,"Name = ?",new String[]{name});
 
         }
 
@@ -80,17 +82,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * Returns quantity data from database
      * @return
      */
-    public String getQuantity(String name){
-        String quantity="";
+    public String getProductDetails(String name,String item){
+        String dbValue="";
         SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " + productName + " = '" + name + "'";
         Cursor data = db.rawQuery(query, null);
-        Log.d(TAG, "quantity is: " + query);
-        while(data.moveToNext()) {
-            quantity=data.getString(3);
+        if(item.equals("quantity")) {
+            while (data.moveToNext()) {
+                dbValue = data.getString(3);
+            }
+        }else{
+            while (data.moveToNext()) {
+                dbValue = data.getString(2);
+            }
         }
-        return quantity;
+        return dbValue;
     }
 
     /**
@@ -130,14 +137,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(query);
     }
 
-    public void updateQuantity(String name){
-        String num= getQuantity(name);
-        int updatedQuantity=Integer.parseInt(num)+1;
-        SQLiteDatabase db = this.getWritableDatabase();
-        String query = "UPDATE " + TABLE_NAME + " SET " + productQuantity +
-                " = '" + updatedQuantity + "' WHERE " + productName + " = '" + name + "'";
-        db.execSQL(query);
-
+    public void updateProductDetails(String name,String item){
+        String num= getProductDetails(name,item);
+        if(item.equals("quantity")) {
+            int updatedValue = Integer.parseInt(num) + 1;
+            SQLiteDatabase db = this.getWritableDatabase();
+            String query = "UPDATE " + TABLE_NAME + " SET " + productQuantity +
+                    " = '" + updatedValue + "' WHERE " + productName + " = '" + name + "'";
+            db.execSQL(query);
+        }else{
+            double updatedValue = Double.parseDouble(num) + Double.parseDouble(item);
+            SQLiteDatabase db = this.getWritableDatabase();
+            String query = "UPDATE " + TABLE_NAME + " SET " + productPrice +
+                    " = '" + updatedValue + "' WHERE " + productName + " = '" + name + "'";
+            db.execSQL(query);
+        }
     }
 
     /**
