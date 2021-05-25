@@ -50,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
     String[] fullItem;
     DatabaseHelper mDatabaseHelper;
     int quantity;
-    HashMap<String, String> products = new HashMap<String, String>();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,21 +106,8 @@ public class MainActivity extends AppCompatActivity {
                     totalamount.setText(total);
                     Log.i(MainActivity.class.getSimpleName(), "SUM== " + sum);
                 }
-
-                /*if(products.containsKey(fullItem[0])){
-                    sumOfProduct+=Float.parseFloat(products.get(fullItem[0]));
-                    products.put(fullItem[0],products.get(fullItem[0])+(sumOfProduct));
-                    Log.i(MainActivity.class.getSimpleName(), "YEAHHH== " + products);
-                }else{
-                    sumOfProduct = String.valueOf(Float.valueOf(fullItem[1]));
-                    products.put(fullItem[0],sumOfProduct);
-                    Log.i(MainActivity.class.getSimpleName(), "YEAH== " + products);
-                    Log.i(MainActivity.class.getSimpleName(), "PRODUCT== " + fullItem[1]);
-
-                }*/
-
                 //Save data into database
-                AddData(fullItem[0],fullItem[1]);
+                AddData(fullItem[0],fullItem[1],true);
             }
         });
         minusbtn.setOnClickListener(new View.OnClickListener(){
@@ -140,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
                     totalamount.setText(total);
                     Log.i(MainActivity.class.getSimpleName(), "SUM== " + sum);
                 }
-                AddData(fullItem[0],fullItem[1]);
+                AddData(fullItem[0],fullItem[1],false);
             }
         });
         btnViewData.setOnClickListener(new View.OnClickListener() {
@@ -155,17 +140,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Database
-    public void AddData(String name,String price){
-        boolean insertData= mDatabaseHelper.addData(name,price);
+    public void AddData(String name,String price,boolean addData){
+        if(addData) {
+            boolean insertData = mDatabaseHelper.addData(name, price);
 
-        if(insertData){
-            db_toast=Toast.makeText(getApplicationContext(),"Data Saved", Toast.LENGTH_LONG);
-            db_toast.show();
+            if (insertData) {
+                db_toast = Toast.makeText(getApplicationContext(), "Data Saved", Toast.LENGTH_LONG);
+                db_toast.show();
+            } else {
+                db_toast = Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_LONG);
+                db_toast.show();
+            }
+        }else{
+            boolean removeData = mDatabaseHelper.removeData(name, price);
+
+            if (removeData) {
+                db_toast = Toast.makeText(getApplicationContext(), "Data Saved", Toast.LENGTH_LONG);
+                db_toast.show();
+            } else {
+                db_toast = Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_LONG);
+                db_toast.show();
+            }
         }
-        else{
-            db_toast=Toast.makeText(getApplicationContext(),"Something went wrong", Toast.LENGTH_LONG);
-            db_toast.show();
-        }
+
     }
 
     //Camera

@@ -47,19 +47,54 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor data = fetchProduct(name);
 
         if(data.getCount()==0){
+            Log.d(TAG, "PLUS IF: query: " +data.getCount());
+
             contentValues.put(productQuantity, 1);
             result = db.insert(TABLE_NAME, null, contentValues);
         }else{
-            updateProductDetails(name,"quantity");
-            updateProductDetails(name,price);
+            Log.d(TAG, "PLUS ELSE: query: " +data.getCount());
+
+            updateProductDetails(name,"quantity",true);
+            updateProductDetails(name,price,true);
 
             contentValues.put(productQuantity, getProductDetails(name,"quantity"));
             contentValues.put(productPrice, getProductDetails(name,"price"));
 
             updateDbValues = db.update(TABLE_NAME,contentValues,"Name = ?",new String[]{name});
-
         }
+        if (result == -1) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
+    public boolean removeData(String name,String price) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(productPrice, price);
+        contentValues.put(productName, name);
+        long result = 0,updateDbValues;
+        int quantity;
+        Cursor data = fetchProduct(name);
+        quantity=Integer.parseInt(getProductDetails(name,"quantity"));
+        Log.d(TAG, "MINUS IF: " +quantity);
+
+        if(quantity==1){
+            Log.d(TAG, "MINUS IF: " +quantity);
+
+            result = db.delete(TABLE_NAME, "Name = ?",new String[]{name});
+        }else if(quantity>1){
+            Log.d(TAG, "MINUS ELSE: " + quantity);
+
+            updateProductDetails(name,"quantity",false);
+            updateProductDetails(name,price,false);
+
+            contentValues.put(productQuantity, getProductDetails(name,"quantity"));
+            contentValues.put(productPrice, getProductDetails(name,"price"));
+
+            updateDbValues = db.update(TABLE_NAME,contentValues,"Name = ?",new String[]{name});
+        }
         if (result == -1) {
             return false;
         } else {
@@ -137,19 +172,37 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(query);
     }
 
-    public void updateProductDetails(String name,String item){
+    public void updateProductDetails(String name,String item,Boolean addedValue){
+        int updatedQuantity=0;
+        double updatedPrice=0;
+
         String num= getProductDetails(name,item);
-        if(item.equals("quantity")) {
-            int updatedValue = Integer.parseInt(num) + 1;
+
+        if(item.equals("quantity") && addedValue) {
+            updatedQuantity = Integer.parseInt(num) + 1;
             SQLiteDatabase db = this.getWritableDatabase();
             String query = "UPDATE " + TABLE_NAME + " SET " + productQuantity +
-                    " = '" + updatedValue + "' WHERE " + productName + " = '" + name + "'";
+                    " = '" + updatedQuantity + "' WHERE " + productName + " = '" + name + "'";
             db.execSQL(query);
-        }else{
-            double updatedValue = Double.parseDouble(num) + Double.parseDouble(item);
+        }else if(!item.equals("quantity") && addedValue){
+            updatedPrice = Double.parseDouble(num) + Double.parseDouble(item);
             SQLiteDatabase db = this.getWritableDatabase();
             String query = "UPDATE " + TABLE_NAME + " SET " + productPrice +
-                    " = '" + updatedValue + "' WHERE " + productName + " = '" + name + "'";
+                    " = '" + updatedPrice + "' WHERE " + productName + " = '" + name + "'";
+            db.execSQL(query);
+        }
+
+        if(item.equals("quantity") && !addedValue) {
+            updatedQuantity = Integer.parseInt(num) - 1;
+            SQLiteDatabase db = this.getWritableDatabase();
+            String query = "UPDATE " + TABLE_NAME + " SET " + productQuantity +
+                    " = '" + updatedQuantity + "' WHERE " + productName + " = '" + name + "'";
+            db.execSQL(query);
+        }else if(!item.equals("quantity") && !addedValue){
+            updatedPrice = Double.parseDouble(num) - Double.parseDouble(item);
+            SQLiteDatabase db = this.getWritableDatabase();
+            String query = "UPDATE " + TABLE_NAME + " SET " + productPrice +
+                    " = '" + updatedPrice + "' WHERE " + productName + " = '" + name + "'";
             db.execSQL(query);
         }
     }
@@ -167,6 +220,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(TAG, "deleteName: query: " + query);
         Log.d(TAG, "deleteName: Deleting " + name + " from database.");
         db.execSQL(query);
+    }
+
+    public void removeItemFromDb(String name){
+
     }
 }
 
