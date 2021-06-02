@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -23,12 +24,14 @@ public class ListDataActivity extends AppCompatActivity {
     DatabaseHelper mDatabaseHelper;
 
     private ListView mListView;
+    private Button cleanDbButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.list_layout);
         mListView = (ListView) findViewById(R.id.listView);
+        cleanDbButton = (Button) findViewById(R.id.cleanDb);
         mDatabaseHelper = new DatabaseHelper(this);
 
         populateListView();
@@ -40,10 +43,10 @@ public class ListDataActivity extends AppCompatActivity {
         //get the data and append to a list
         Cursor data = mDatabaseHelper.getData();
         ArrayList<String> listData = new ArrayList<>();
-        while(data.moveToNext()){
+        while (data.moveToNext()) {
             //get the value from the database in column 1
             //then add it to the ArrayList
-            fullProductDetails=data.getString(1)+"| "+data.getString(2)+"| "+data.getString(3);
+            fullProductDetails = data.getString(1) + "| " + data.getString(2) + "| " + data.getString(3);
             listData.add(fullProductDetails);
         }
         //create the list adapter and set the adapter
@@ -51,7 +54,7 @@ public class ListDataActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
 
         //set an onItemClickListener to the ListView
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        /*mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 String name = adapterView.getItemAtPosition(i).toString();
@@ -73,14 +76,28 @@ public class ListDataActivity extends AppCompatActivity {
                     toastMessage("No ID associated with that name");
                 }
             }
+        });*/
+
+        //Clear all data from Database
+        cleanDbButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mDatabaseHelper.cleanDatabase();
+                toastMessage("All products removed!");
+                MainActivity.totalamount.setText("0");
+                finish();
+                startActivity(getIntent());
+
+            }
         });
     }
 
     /**
      * customizable toast
+     *
      * @param message
      */
-    private void toastMessage(String message){
-        Toast.makeText(this,message, Toast.LENGTH_SHORT).show();
+    private void toastMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }
