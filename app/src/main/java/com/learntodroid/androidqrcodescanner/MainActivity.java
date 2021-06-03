@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static java.lang.Math.round;
+
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CAMERA = 0;
 
@@ -41,15 +43,11 @@ public class MainActivity extends AppCompatActivity {
 
     private Button qrCodeFoundButton, plusbtn, minusbtn, btnViewData;
     private String qrCode;
-    private String total;
-    private String nameOfProduct;
-    private String sumOfProduct;
-    public double sum;
-    Toast priceToast, db_toast;
-    private static DecimalFormat df = new DecimalFormat("0.00");
+    public String total;
+    public float sum;
+    Toast priceToast;
     String[] fullItem;
     DatabaseHelper mDatabaseHelper;
-    int quantity;
     static TextView totalamount;
 
     @Override
@@ -85,38 +83,39 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         plusbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //quantity++;
-                sum = sum + Double.parseDouble(fullItem[1]);
-                sum = Double.parseDouble(df.format(sum));
-                total = String.valueOf(sum);
+                try {
+                    sum = sum + Float.parseFloat(fullItem[1]);
+                    total = String.format("%.02f",sum);
+                    totalamount.setTextColor(Color.GREEN);
+                    totalamount.setText(total);
+                    Log.i(MainActivity.class.getSimpleName(), "fullitem1: " + fullItem[1]);
 
-                totalamount.setTextColor(Color.GREEN);
-                totalamount.setText(total);
-                Log.i(MainActivity.class.getSimpleName(), "SUM== " + sum);
-
-                //Save data into database
-                updateData(fullItem[0], fullItem[1], true);
+                    //Save data into database
+                    updateData(fullItem[0], fullItem[1], true);
+                } catch (Exception e) {
+                    toastMessage("Something wrong happened!" + e);
+                }
             }
         });
         minusbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //quantity--;
-                sum = sum - Double.parseDouble(fullItem[1]);
-                sum = Double.parseDouble(df.format(sum));
-                total = String.valueOf(sum);
-                if (sum < 0) {
-                    sum=0;
-                    toastMessage("Cannot be less than 0!!!");
-                } else {
-                    totalamount.setTextColor(Color.GREEN);
-                    totalamount.setText(total);
-                    updateData(fullItem[0], fullItem[1], false);
-
+                try {
+                    sum = sum - Float.parseFloat(fullItem[1]);
+                    total = String.format("%.02f",sum);
+                    if (sum < 0) {
+                        sum = 0;
+                        toastMessage("Cannot be less than 0!!!");
+                    } else {
+                        totalamount.setTextColor(Color.GREEN);
+                        totalamount.setText(total);
+                        updateData(fullItem[0], fullItem[1], false);
+                    }
+                } catch (Exception e) {
+                    toastMessage("Something wrongg happened");
                 }
             }
         });
@@ -135,26 +134,9 @@ public class MainActivity extends AppCompatActivity {
     public void updateData(String name, String price, boolean addData) {
         if (addData) {
             boolean insertData = mDatabaseHelper.addData(name, price);
-
-            /*if (insertData) {
-                db_toast = Toast.makeText(getApplicationContext(), "Data Saved", Toast.LENGTH_LONG);
-                db_toast.show();
-            } else {
-                db_toast = Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_LONG);
-                db_toast.show();
-            }*/
         } else {
             boolean removeData = mDatabaseHelper.removeData(name, price);
-
-            /*if (removeData) {
-                db_toast = Toast.makeText(getApplicationContext(), "Data Saved", Toast.LENGTH_LONG);
-                db_toast.show();
-            } else {
-                db_toast = Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_LONG);
-                db_toast.show();
-            }*/
         }
-
     }
 
     //Camera

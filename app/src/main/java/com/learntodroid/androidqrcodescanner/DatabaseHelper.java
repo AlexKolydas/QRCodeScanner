@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String productName = "Name";
     private static final String productPrice = "Price";
     private static final String productQuantity = "Quantity";
-    private Context view;
+    private Context context;
 
     public DatabaseHelper(Context context) {
         super(context, TABLE_NAME, null, 1);
@@ -34,10 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
-        // Drop older table if existed
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-
-        onCreate(db);
+        //context.deleteDatabase(TABLE_NAME);
     }
 
     public boolean addData(String name, String price) {
@@ -55,9 +52,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } else {
             updateProductDetails(name, "quantity", true);
             updateProductDetails(name, price, true);
+            Float prodPrice = Float.valueOf(getProductDetails(name, "price"));
+            String strFinalPrice= String.format("%.02f",prodPrice); //need to make float with 2 decimals and put it in DB
+            Float finalPrice=Float.valueOf(strFinalPrice);
+            Log.i(DatabaseHelper.class.getSimpleName(), "PRICE IS: " + finalPrice);
 
             contentValues.put(productQuantity, getProductDetails(name, "quantity"));
-            contentValues.put(productPrice, getProductDetails(name, "price"));
+            //contentValues.put(productPrice, finalPrice);
 
             updateDbValues = db.update(TABLE_NAME, contentValues, "Name = ?", new String[]{name});
         }
@@ -82,10 +83,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             result = db.delete(TABLE_NAME, "Name = ?", new String[]{name});
         } else if (quantity > 1) {
             updateProductDetails(name, "quantity", false);
-            updateProductDetails(name, price, false);
+            //updateProductDetails(name, price, false);
 
             contentValues.put(productQuantity, getProductDetails(name, "quantity"));
-            contentValues.put(productPrice, getProductDetails(name, "price"));
+            //contentValues.put(productPrice, getProductDetails(name, "price"));
 
             updateDbValues = db.update(TABLE_NAME, contentValues, "Name = ?", new String[]{name});
         }
@@ -145,31 +146,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return data;
     }
 
-    public Cursor getItemID(String name) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT *" + " FROM " + TABLE_NAME +
-                " WHERE " + productPrice + " = '" + name + "'";
-        Cursor data = db.rawQuery(query, null);
-        return data;
-    }
-
-    /**
-     * Updates the name field
-     *
-     * @param newName
-     * @param id
-     * @param oldName
-     */
-    public void updateName(String newName, int id, String oldName) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        String query = "UPDATE " + TABLE_NAME + " SET " + productPrice +
-                " = '" + newName + "' WHERE " + productName + " = '" + id + "'" +
-                " AND " + productPrice + " = '" + oldName + "'";
-        Log.d(TAG, "updateName: query: " + query);
-        Log.d(TAG, "updateName: Setting name to " + newName);
-        db.execSQL(query);
-    }
-
     public void updateProductDetails(String name, String item, Boolean addedValue) {
         int updatedQuantity = 0;
         double updatedPrice = 0;
@@ -216,12 +192,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void removeItemFromDb(String name) {
-
-    }
-
     private void toastMessage(String message) {
-        Toast.makeText(view, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 }
 
